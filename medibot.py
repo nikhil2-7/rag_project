@@ -2,7 +2,7 @@ import os
 import streamlit as st
 
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain.chains import RetrievalQA
+from langchain.chains import ConversationalRetrievalChain
 
 from langchain_community.vectorstores import FAISS
 from langchain_core.prompts import PromptTemplate
@@ -80,7 +80,7 @@ def main():
                 st.error("Failed to load the vector store")
                 
                 #update started
-            from langchain.chains import ConversationalRetrievalChain
+            
             
             qa_chain = ConversationalRetrievalChain.from_llm(
                 llm=ChatGroq(
@@ -88,7 +88,7 @@ def main():
                     temperature=0.0,
                     groq_api_key=os.environ["GROQ_API_KEY"],
                 ),
-                chain_type="stuff",
+                
                 retriever=vectorstore.as_retriever(search_kwargs={'k':3}),
                 return_source_documents=True,
                 combine_docs_chain_kwargs={'prompt': set_custom_prompt(CUSTOM_PROMPT_TEMPLATE)}
@@ -96,11 +96,18 @@ def main():
 
             response=qa_chain.invoke({'question':prompt,
                                       "chat_history":st.session_state.chat_history})
-
+            
+            
+            # fixed (invoke with memory)start
+            response=qa_chain.invoke({
+                'question': prompt,
+                'chat_history': st.session_state.chat_history})
+            #fixed (invoke with memory)start
+            
             result=response["answer"]
             source_documents=response["source_documents"]
             
-            #save memory
+            #save memory store memory
             st.session_state.chat_history.append((prompt,result))
                 #update ended
                 
